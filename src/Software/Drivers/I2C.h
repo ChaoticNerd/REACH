@@ -1,7 +1,7 @@
 #ifndef I2C_H
 #define I2C_H
 #include <stdint.h>
-#include "i2c_status.h"
+#include "I2C_status.h"
 
 /* I2C1: PB8=SCL, PB9=SDA, AF4; standard mode 100 kHz.
  * Pass actual APB1 peripheral clock in Hz; requires external pullups.

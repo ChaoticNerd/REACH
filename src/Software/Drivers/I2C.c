@@ -1,4 +1,4 @@
-#include "i2c.h"
+#include "I2C.h"
 #include "stm32f407xx.h"
 #include <stdbool.h>
 #define I2C_TIMEOUT 200000u
@@ -15,7 +15,7 @@ static I2C_STATUS wait_sr1(uint32_t set_mask) {
 
         if (curr_status & I2C_SR1_AF) {  // Check if device didn't acknowledge signal/expected byte not recieved
             I2C1->SR1 &= ~I2C_SR1_AF;   // AF = Acknowledge Failure
-            return REACH_NACK;          // Returns No ACKnowledge
+            return I2C_NACK;          // Returns No ACKnowledge
         }
 
         /*
@@ -23,14 +23,14 @@ static I2C_STATUS wait_sr1(uint32_t set_mask) {
          * overrun means that we didn't read the data before it got overwritten
         */
         if (curr_status & (I2C_SR1_BERR | I2C_SR1_ARLO | I2C_SR1_OVR)) 
-            return REACH_BUS; // notifies system of bus issue
+            return I2C_BUS; // notifies system of bus issue
 
         // Ready to move ahead in state machine
         // Recieved signal matches what needed
         if ((curr_status & set_mask) == set_mask) 
-            return REACH_OK;
+            return I2C_OK;
     }
-    return REACH_TIMEOUT; // timeout, took too long
+    return I2C_TIMEOUT; // timeout, took too long
 }
 
 /*
@@ -56,14 +56,14 @@ static I2C_STATUS start_address(uint8_t addr7, bool read) {
 
     // If polling limit is reached, and bus is still busy, then report busy
     if (I2C1->SR2 & I2C_SR2_BUSY) 
-        return REACH_BUSY;
+        return I2C_BUSY;
 
     // I2C start
     I2C1->CR1 |= I2C_CR1_START;
 
     // Checks whether I2C is ready to start transmitting (SB = Starting Bit active or not)
     I2C_STATUS e = wait_sr1(I2C_SR1_SB);
-    if (e != REACH_OK) // I2C has a failure (setup wrong or smth)
+    if (e != I2C_OK) // I2C has a failure (setup wrong or smth)
         return e;
 
     // Sends address to I2C to tell it where we want to send our data
@@ -86,7 +86,7 @@ I2C_STATUS I2C1_write(uint8_t address, const uint8_t *p, unsigned len) {
 
     // Fails immediately if bus is left hanging or can't even start transmission
     I2C_STATUS e = start_address(address, false);
-    if (e != REACH_OK) { 
+    if (e != I2C_OK) { 
         abort_bus(); 
         return e; 
     }
@@ -99,7 +99,7 @@ I2C_STATUS I2C1_write(uint8_t address, const uint8_t *p, unsigned len) {
     for (unsigned i=0; i<len; i++) {
         e = wait_sr1(I2C_SR1_TXE); // Checks Transmit Data Register Empty; if yes, ready for next byte
 
-        if (e != REACH_OK) {  // if it encounters an error, it'll stop
+        if (e != I2C_OK) {  // if it encounters an error, it'll stop
             abort_bus(); // basically clears bus and stops transmission
             return e; 
         }
@@ -122,14 +122,14 @@ I2C_STATUS I2C1_read_byte(uint8_t address, uint8_t *out) {
 
     // Make sure pointer actually exists
     if (!out) 
-        return REACH_BAD_ARG;
+        return I2C_BAD_ARG;
 
     // Only want ONE byte, so stop reading after 1 byte
     I2C1->CR1 &= ~I2C_CR1_ACK;
 
     // Start read mode and make sure bus is ready deliver
     I2C_STATUS e = start_address(address, true);
-    if (e != REACH_OK) { 
+    if (e != I2C_OK) { 
         abort_bus(); 
         return e; 
     }
@@ -156,7 +156,7 @@ I2C_STATUS I2C1_read_byte(uint8_t address, uint8_t *out) {
     
     // If there exists a byte to read and bus is ready:
     // then it stores the byte into the pointer
-    if (e == REACH_OK) 
+    if (e == I2C_OK) 
         *out = (uint8_t)I2C1->DR;
     else 
         abort_bus(); // clears bus otherwise
@@ -171,7 +171,7 @@ I2C_STATUS I2C1_init(uint32_t pclk1_hz) {
 
     // Set up clock
     if (pclk1_hz < 2000000u || pclk1_hz > 42000000u) 
-        return REACH_BAD_ARG;
+        return I2C_BAD_ARG;
 
     // Enable GPIOB clock
     // *work note: AHB1ENR = AHB1 Peripheral Clock Enable Register
@@ -250,5 +250,5 @@ I2C_STATUS I2C1_init(uint32_t pclk1_hz) {
     I2C1->CR1   = I2C_CR1_PE;
 
     // Init successful
-    return REACH_OK;
+    return I2C_OK;
 }
