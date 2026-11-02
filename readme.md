@@ -101,7 +101,7 @@ PA13/PA14 are dedicated to the on-board debugger in our workflow and **not count
 |---|---|---|
 | Three TMUX1574 video multiplexers | **TBD** | PC0 was a proposed shared SELECT signal in earlier firmware, but is **not confirmed wired or enabled**. The mux also requires correct enable/control wiring. |
 | SPI LCD (ST7735, ST7789, or ILI9341) | **TBD** | Select SPI bus, display CS, DC, RESET, and backlight pins after LCD choice. Avoid all assigned DCMI pins. |
-| Gripper / arm motors | **TBD** | Select timer/PWM/control pins once motor drivers are finalized. |
+| Gripper / arm motors | **PA0** | Select timer/PWM/control pins once motor drivers are finalized. Number of motors determines how many pins are used |
 | Optional MPU-6050 interrupt | **TBD** | Only required if polling isn't sufficient. |
 
 ## 7. Implementation cautions

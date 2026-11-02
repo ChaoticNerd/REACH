@@ -11,6 +11,8 @@ void PWM_init(void) {
 	// INIT PA0
 
 	RCC->AHB2ENR |= RCC_AHB2ENR_GPIOAEN; // enable GPIOA
+	while ((RCC->AHB2ENR&RCC_AHB2ENR_GPIOAEN)==0){}; // wait for GPIOA to be setup
+
 	GPIOA->MODER &= ~GPIO_MODER_MODE0; // clear PA0 bits
 	GPIOA->MODER |= GPIO_MODER_MODER0_1; // set MODER to 10 for AF
 	GPIOA->AFR[0] &= ~GPIO_AFRL_AFSEL0; // clear AF for PA0
